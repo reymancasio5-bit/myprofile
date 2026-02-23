@@ -100,25 +100,67 @@
         var statsEl = q('.header-stats');
         if (statsEl) statsObs.observe(statsEl);
 
-        /* Nav highlight on scroll — GSAP tween opacity */
-        window.addEventListener('scroll', debounce(function () {
-            var sections = qa('section[id]');
-            var navLinks = qa('.nav-desktop a');
-            if (!navLinks.length) return;
-
-            var scrollY = window.pageYOffset;
-            var current = '';
-
-            sections.forEach(function (s) {
-                if (scrollY >= s.offsetTop - 120) current = s.id;
-            });
-
-            navLinks.forEach(function (link) {
-                var isActive = link.getAttribute('href') === '#' + current;
-                link.classList.toggle('active', isActive);
-            });
-        }, 80), { passive: true });
     }
+
+    /* ════════════════════════════════════════════════════════════
+       3b. DESKTOP NAV HIGHLIGHT — IntersectionObserver (precise)
+           Tracks which section occupies the top portion of the
+           viewport and highlights exactly that nav link.
+           Also fires immediately on nav link click.
+    ════════════════════════════════════════════════════════════ */
+    (function () {
+        var navLinks = qa('.nav-desktop a');
+        if (!navLinks.length) return;
+
+        var navEl   = document.getElementById('mainNav');
+        var navH    = navEl ? navEl.offsetHeight : 60;
+        /* Re-measure on resize */
+        window.addEventListener('resize', debounce(function () {
+            navH = navEl ? navEl.offsetHeight : 60;
+        }, 200), { passive: true });
+
+        function setDesktopActive(id) {
+            navLinks.forEach(function (link) {
+                link.classList.toggle('active', link.getAttribute('href') === '#' + id);
+            });
+        }
+
+        /* Use a rootMargin that makes a section "intersecting" only
+           when its top edge is within a narrow band just below the nav. */
+        var sectionObs = new IntersectionObserver(function (entries) {
+            /* Collect all currently intersecting sections, pick the one
+               whose top is closest to (but below) the nav bottom. */
+            var visible = [];
+            entries.forEach(function (entry) {
+                if (entry.isIntersecting) visible.push(entry);
+            });
+            if (!visible.length) return;
+
+            /* Sort by how close the top edge is to the nav */
+            visible.sort(function (a, b) {
+                return Math.abs(a.boundingClientRect.top - navH)
+                     - Math.abs(b.boundingClientRect.top - navH);
+            });
+
+            setDesktopActive(visible[0].target.id);
+        }, {
+            /* Top of observation window starts just below the nav,
+               bottom ends at 40% of viewport — ensures only the
+               "leading" section is ever active. */
+            rootMargin: '-' + (navH + 2) + 'px 0px -60% 0px',
+            threshold: 0
+        });
+
+        qa('section[id]').forEach(function (s) { sectionObs.observe(s); });
+
+        /* Immediate highlight on click — don't wait for scroll to settle */
+        navLinks.forEach(function (link) {
+            link.addEventListener('click', function () {
+                var id = this.getAttribute('href').replace('#', '');
+                setDesktopActive(id);
+            });
+        });
+    })();
 
     /* ════════════════════════════════════════════════════════════
        4. WORKFLOW NODE ENTRANCE (per-modal open hook)
