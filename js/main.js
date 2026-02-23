@@ -157,7 +157,7 @@ function scrollToSection(id) {
     /* Scroll to section top, offset by nav height + small breathing room.
        We target the section element itself (not the h2) so the
        IntersectionObserver rootMargin aligns correctly. */
-    var top = section.getBoundingClientRect().top + window.pageYOffset - navH - 4;
+    var top = section.getBoundingClientRect().top + window.pageYOffset - navH - 20;
     window.scrollTo({ top: top, behavior: 'smooth' });
 }
 
