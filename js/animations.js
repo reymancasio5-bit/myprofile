@@ -159,10 +159,6 @@
             if (bestId) setDesktopActive(bestId);
         }
 
-        window.addEventListener('scroll', updateDesktopActive, { passive: true });
-        /* Run once on load so the initial state is set */
-        updateDesktopActive();
-
         /* Immediate highlight on click — don't wait for scroll to settle */
         navLinks.forEach(function (link) {
             link.addEventListener('click', function () {
