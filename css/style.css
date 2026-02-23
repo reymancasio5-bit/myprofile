@@ -372,13 +372,14 @@ section[data-reveal].revealed {
     transform: translateY(0);
 }
 
+section { margin-bottom: 80px; }
+
 h2 {
     font-size: 2.5rem;
     margin-bottom: 40px;
     position: relative;
     display: inline-block;
     color: var(--accent);
-    scroll-margin-top: 90px;
 }
 
 h2::after {
