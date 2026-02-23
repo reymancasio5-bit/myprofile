@@ -378,6 +378,7 @@ h2 {
     position: relative;
     display: inline-block;
     color: var(--accent);
+    scroll-margin-top: 56.8359px;
 }
 
 h2::after {
