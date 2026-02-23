@@ -125,33 +125,43 @@
             });
         }
 
-        /* Use a rootMargin that makes a section "intersecting" only
-           when its top edge is within a narrow band just below the nav. */
-        var sectionObs = new IntersectionObserver(function (entries) {
-            /* Collect all currently intersecting sections, pick the one
-               whose top is closest to (but below) the nav bottom. */
-            var visible = [];
-            entries.forEach(function (entry) {
-                if (entry.isIntersecting) visible.push(entry);
+        /* ── Scroll-based active section detection ──
+           Instead of IntersectionObserver (which uses a static rootMargin
+           and can't re-create itself on resize), we use a scroll listener
+           that checks each section's position on every scroll tick.
+           This is reliable regardless of section height or nav height. */
+
+        var allSections = qa('section[id]');
+
+        function updateDesktopActive() {
+            /* Re-read navH live so it's always accurate after resize */
+            var currentNavH = navEl ? navEl.offsetHeight : 60;
+            /* The "trigger line" is just below the nav + a small buffer */
+            var triggerY = currentNavH + 10;
+
+            var bestId = null;
+            var bestTop = -Infinity;
+
+            allSections.forEach(function (s) {
+                var top = s.getBoundingClientRect().top;
+                /* Section is at or above the trigger line — candidate */
+                if (top <= triggerY && top > bestTop) {
+                    bestTop = top;
+                    bestId  = s.id;
+                }
             });
-            if (!visible.length) return;
 
-            /* Sort by how close the top edge is to the nav */
-            visible.sort(function (a, b) {
-                return Math.abs(a.boundingClientRect.top - navH)
-                     - Math.abs(b.boundingClientRect.top - navH);
-            });
+            /* If no section has crossed the trigger yet, default to first */
+            if (!bestId && allSections.length) {
+                bestId = allSections[0].id;
+            }
 
-            setDesktopActive(visible[0].target.id);
-        }, {
-            /* Top of observation window starts just below the nav,
-               bottom ends at 40% of viewport — ensures only the
-               "leading" section is ever active. */
-            rootMargin: '-' + (navH + 2) + 'px 0px -60% 0px',
-            threshold: 0
-        });
+            if (bestId) setDesktopActive(bestId);
+        }
 
-        qa('section[id]').forEach(function (s) { sectionObs.observe(s); });
+        window.addEventListener('scroll', updateDesktopActive, { passive: true });
+        /* Run once on load so the initial state is set */
+        updateDesktopActive();
 
         /* Immediate highlight on click — don't wait for scroll to settle */
         navLinks.forEach(function (link) {
