@@ -152,11 +152,13 @@ document.addEventListener('keydown', function (e) {
 function scrollToSection(id) {
     var section = document.getElementById(id);
     if (!section) return;
-    var nav    = document.getElementById('mainNav');
-    var navH   = nav ? nav.offsetHeight : 0;
-    var heading = section.querySelector('h2');
-    var target  = heading || section;
-    window.scrollTo({ top: target.getBoundingClientRect().top + window.pageYOffset - navH - 12, behavior: 'smooth' });
+    var nav  = document.getElementById('mainNav');
+    var navH = nav ? nav.offsetHeight : 0;
+    /* Scroll to section top, offset by nav height + small breathing room.
+       We target the section element itself (not the h2) so the
+       IntersectionObserver rootMargin aligns correctly. */
+    var top = section.getBoundingClientRect().top + window.pageYOffset - navH - 4;
+    window.scrollTo({ top: top, behavior: 'smooth' });
 }
 
 document.querySelectorAll('.nav-desktop a').forEach(function (link) {
